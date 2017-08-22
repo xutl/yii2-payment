@@ -2,7 +2,7 @@
   "name": "xutl/yii2-payment",
   "description": "The payment extension for the Yii framework",
   "type": "yii2-extension",
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "keywords": [
     "yii",
     "payment"
@@ -14,13 +14,21 @@
     }
   ],
   "require": {
-    "php": ">=5.4.0",
+    "php": ">=5.6",
     "yiisoft/yii2": "~2.0.6",
     "yiisoft/yii2-httpclient": "~2.0.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.2"
   },
   "autoload": {
     "psr-4": {
       "xutl\\payment\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "xutl\\payment\\tests\\": "tests"
     }
   }
 }
