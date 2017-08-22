@@ -5,8 +5,9 @@
  * @license http://www.tintsoft.com/license/
  */
 
-namespace xutl\payment\gateways\alipay;
-class App extends Alipay
+namespace xutl\payment\gateways\wexin;
+
+class Web extends Wexin
 {
 
 }

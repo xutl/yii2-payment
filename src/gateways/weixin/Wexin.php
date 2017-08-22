@@ -70,5 +70,8 @@ class Wexin implements GatewayInterface
         if ($this->publicKey === false) {
             throw new InvalidConfigException(openssl_error_string());
         }
+        if(YII_DEBUG){
+
+        }
     }
 }
