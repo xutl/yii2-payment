@@ -30,5 +30,10 @@
     "psr-4": {
       "xutl\\payment\\tests\\": "tests"
     }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0-dev"
+    }
   }
 }
