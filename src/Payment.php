@@ -17,14 +17,6 @@ use yii\base\InvalidParamException;
  */
 class Payment extends Component
 {
-
-    /**
-     * Internal storage for all available drivers
-     *
-     * @var array
-     */
-    private $_drivers = [];
-
     /**
      * Internal storage for all available gateways
      *
@@ -33,43 +25,10 @@ class Payment extends Component
     private $_gateways = [];
 
     /**
-     * 初始化
-     */
-    public function init(): void
-    {
-        parent::init();
-        // merge core components with custom components
-        foreach ($this->coreComponents() as $id => $component) {
-            if (!isset($config['components'][$id])) {
-                $config['components'][$id] = $component;
-            } elseif (is_array($config['components'][$id]) && !isset($config['components'][$id]['class'])) {
-                $config['components'][$id]['class'] = $component['class'];
-            }
-        }
-    }
-
-    /**
-     * Returns the configuration of core application components.
-     * @return array
-     */
-    public function coreGateways(): array
-    {
-        return [
-            'alipay' => [
-                'a' => '',
-                'web' => 'yii\log\Dispatcher'
-            ],
-            'weixin' => [
-                'class' => 'yii\web\View'
-            ],
-        ];
-    }
-
-    /**
      * 设置网关
      * @param array $gateways list of gateways
      */
-    public function setGateways(array $gateways): void
+    public function setGateways(array $gateways)
     {
         $this->_gateways = $gateways;
     }
@@ -78,7 +37,7 @@ class Payment extends Component
      * 获取网关列表
      * @return GatewayInterface[] list of gateways.
      */
-    public function getGateways(): array
+    public function getGateways()
     {
         $gateways = [];
         foreach ($this->_gateways as $id => $gateway) {
@@ -93,7 +52,7 @@ class Payment extends Component
      * @return GatewayInterface gateway instance.
      * @throws InvalidParamException on non existing gateway request.
      */
-    public function getGateway($id): object
+    public function getGateway($id)
     {
         if (!array_key_exists($id, $this->_gateways)) {
             throw new InvalidParamException("Unknown gateway '{$id}'.");
@@ -109,7 +68,7 @@ class Payment extends Component
      * @param string $id gateway id.
      * @return boolean whether gateway exist.
      */
-    public function hasGateway($id): bool
+    public function hasGateway($id)
     {
         return array_key_exists($id, $this->_gateways);
     }
@@ -120,7 +79,7 @@ class Payment extends Component
      * @param array $config gateway instance configuration.
      * @return object|GatewayInterface gateway instance.
      */
-    protected function createGateway($id, $config): object
+    protected function createGateway($id, $config)
     {
         $config['id'] = $id;
         return Yii::createObject($config);
