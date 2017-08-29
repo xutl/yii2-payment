@@ -17,7 +17,11 @@ use xutl\payment\GatewayInterface;
  */
 class Alipay implements GatewayInterface
 {
+    /**
+     * @var integer
+     */
     public $appId;
+    
     /**
      * @var string 私钥
      */
@@ -41,7 +45,6 @@ class Alipay implements GatewayInterface
         if (!in_array('sha256', openssl_get_md_methods(), true)) {
             trigger_error('need openssl support sha256', E_USER_ERROR);
         }
-
         if (empty ($this->appId)) {
             throw new InvalidConfigException ('The "appId" property must be set.');
         }

@@ -7,13 +7,13 @@
 
 namespace xutl\payment\gateways\wexin;
 
-use xutl\payment\GatewayInterface;
+use xutl\payment\Gateway;
 
 /**
  * Class Wexin
  * @package xutl\payment\gateways\wexin
  */
-class Wexin implements GatewayInterface
+class Wexin extends Gateway
 {
     /**
      * @var string 绑定支付的APPID
@@ -40,6 +40,9 @@ class Wexin implements GatewayInterface
      */
     public $publicKey;
 
+    /**
+     * 初始化
+     */
     public function init()
     {
         parent::init();
