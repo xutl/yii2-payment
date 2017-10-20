@@ -44,19 +44,19 @@ class Wechat extends BaseClient
      */
     public $publicKey;
 
-    /**
-     * @var Client
-     */
-    public $_httpClient = [
-        'class' => 'yii\httpclient\Client',
-        'baseUrl' => 'https://api.mch.weixin.qq.com',
-        'requestConfig' => [
-            'format' => Client::FORMAT_XML
-        ],
-        'responseConfig' => [
-            'format' => Client::FORMAT_XML
-        ],
-    ];
+//    /**
+//     * @var Client
+//     */
+//    public $_httpClient = [
+//        'class' => 'yii\httpclient\Client',
+//        'baseUrl' => 'https://api.mch.weixin.qq.com',
+//        'requestConfig' => [
+//            'format' => Client::FORMAT_XML
+//        ],
+//        'responseConfig' => [
+//            'format' => Client::FORMAT_XML
+//        ],
+//    ];
 
     /**
      * 初始化
@@ -91,6 +91,9 @@ class Wechat extends BaseClient
 //        if ($this->publicKey === false) {
 //            throw new InvalidConfigException(openssl_error_string());
 //        }
+        $this->getHttpClient()->baseUrl = 'https://api.mch.weixin.qq.com';
+        $this->getHttpClient()->requestConfig = ['format' => Client::FORMAT_XML];
+        $this->getHttpClient()->responseConfig = ['format' => Client::FORMAT_XML];
     }
 
     /**
@@ -104,32 +107,37 @@ class Wechat extends BaseClient
             'appid' => $this->appId,
             'mch_id' => $this->mchId,
             'nonce_str' => $this->generateRandomString(8),
-            'notify_url' => $this->getNoticeUrl(),
-            'device_info' => isset($this->deviceInfoMap[$params['trade_type']]) ? $this->deviceInfoMap[$params['trade_type']] : 'WEB',
+            'notify_url' => 'http://www.openedu.tv',//$this->getNoticeUrl(),
+            'device_info' => 'WEB'
+            //'device_info' => isset($this->deviceInfoMap[$params['trade_type']]) ? $this->deviceInfoMap[$params['trade_type']] : 'WEB',
         ];
         return array_merge($defaultParams, $params);
     }
 
     /**
      * 统一下单
-     * @param Request $request
+     * @param array $params
+     * @return mixed
      */
-    public function unifiedOrder(Request $request)
+    public function unifiedOrder($params)
     {
-        if ($request->validate()) {
-            $params = $this->buildPaymentParameter([
-                'body' => !empty($request->payId) ? $request->payId : '充值',
-                'out_trade_no' => $request->outTradeNo,
-                'total_fee' => round($request->totalFee * 100),
-                'fee_type' => $request->currency,
-                'spbill_create_ip' => $request->userIp,
-                'trade_type' => $request->tradeType,
-            ]);
-            $params['sign'] = $this->createSignature($params);
-            /** @var \yii\httpclient\Response $response */
-            $response = $this->createRequest()->setUrl('pay/unifiedorder')->setMethod('POST')->setData($params)->send();//统一下单
-            return $response;
-        }
+        $params = $this->buildPaymentParameter([
+            'body' => !empty($params['payId']) ? $params['payId'] : '充值',
+            'out_trade_no' => $params['outTradeNo'],
+            'total_fee' => round($params['totalFee'] * 100),
+            'fee_type' => $params['currency'],
+            'spbill_create_ip' => $params['userIp'],
+            'trade_type' => $params['tradeType'],
+        ]);
+        $params['sign'] = $this->createSignature($params);
+        /** @var \yii\httpclient\Response $response */
+        $response = $this->createRequest()
+            ->setUrl('pay/unifiedorder')
+            ->setMethod('POST')
+            ->setData($params)
+            ->send();//统一下单
+        return $response->data;
+
     }
 
     /**
@@ -191,7 +199,7 @@ class Wechat extends BaseClient
         reset($parameters);
         ksort($parameters);
         $bizString = http_build_query($parameters);
-        $bizString .= '&key=' . $this->appKey;
+        $bizString .= '&sign_type=MD5&key=' . $this->appKey;
         return strtoupper(md5(urldecode(strtolower($bizString))));
     }
 
@@ -206,15 +214,16 @@ class Wechat extends BaseClient
         return json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
     }
 
-    /**
-     * 获取Http Client
-     * @return Client
-     */
-    public function getHttpClient()
-    {
-        if (!is_object($this->_httpClient)) {
-            $this->_httpClient = $this->createHttpClient($this->_httpClient);
-        }
-        return $this->_httpClient;
-    }
+
+//    /**
+//     * 获取Http Client
+//     * @return Client
+//     */
+//    public function getHttpClient()
+//    {
+//        if (!is_object($this->_httpClient)) {
+//            $this->_httpClient = $this->createHttpClient($this->_httpClient);
+//        }
+//        return $this->_httpClient;
+//    }
 }
