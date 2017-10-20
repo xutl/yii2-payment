@@ -40,8 +40,6 @@ class Collection extends Component
      */
     public $httpClient;
 
-    public $cache;
-
     /**
      * @var array list of Payment clients with their configuration in format: 'clientId' => [...]
      */
@@ -104,9 +102,6 @@ class Collection extends Component
         $config['id'] = $id;
         if (!isset($config['httpClient']) && $this->httpClient !== null) {
             $config['httpClient'] = $this->httpClient;
-        }
-        if (!isset($config['cache']) && $this->cache !== null) {
-            $config['cache'] = $this->cache;
         }
         return Yii::createObject($config);
     }
