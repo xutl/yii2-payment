@@ -18,7 +18,7 @@ use yii\httpclient\Client;
  * Class BaseClient
  * @package xutl\payment
  */
-class BaseClient extends Component implements ClientInterface
+abstract class BaseClient extends Component implements ClientInterface
 {
     /**
      * @var string client service id.
