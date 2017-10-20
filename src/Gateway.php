@@ -128,13 +128,12 @@ class Gateway extends Component implements GatewayInterface
      */
     protected function setState($key, $value)
     {
-        if (!Yii::$app->has('session')) {
+        if (!Yii::$app->has('cache')) {
             return $this;
         }
-        /* @var \yii\web\Session $session */
-        $session = Yii::$app->get('session');
+        $cache = Yii::$app->get('cache');
         $key = $this->getStateKeyPrefix() . $key;
-        $session->set($key, $value);
+        $cache->set($key, $value);
         return $this;
     }
 
@@ -145,14 +144,12 @@ class Gateway extends Component implements GatewayInterface
      */
     protected function getState($key)
     {
-        if (!Yii::$app->has('session')) {
+        if (!Yii::$app->has('cache')) {
             return null;
         }
-        /* @var \yii\web\Session $session */
-        $session = Yii::$app->get('session');
+        $cache = Yii::$app->get('cache');
         $key = $this->getStateKeyPrefix() . $key;
-        $value = $session->get($key);
-        return $value;
+        return $cache->get($key);
     }
 
     /**
@@ -162,13 +159,12 @@ class Gateway extends Component implements GatewayInterface
      */
     protected function removeState($key)
     {
-        if (!Yii::$app->has('session')) {
+        if (!Yii::$app->has('cache')) {
             return true;
         }
-        /* @var \yii\web\Session $session */
-        $session = Yii::$app->get('session');
+        $cache = Yii::$app->get('cache');
         $key = $this->getStateKeyPrefix() . $key;
-        $session->remove($key);
+        $cache->delete($key);
         return true;
     }
 
