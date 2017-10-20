@@ -129,7 +129,7 @@ class Wechat extends BaseClient
                 'spbill_create_ip' => $request->userIp,
                 'trade_type' => $request->tradeType,
             ]);
-            $params['sign'] = $this->createSign($params);
+            $params['sign'] = $this->createSignature($params);
             /** @var \yii\httpclient\Response $response */
             $response = $this->createRequest()->setUrl('pay/unifiedorder')->setMethod('POST')->setData($params)->send();//统一下单
             return $response;
@@ -149,7 +149,7 @@ class Wechat extends BaseClient
             'out_trade_no' => $paymentId,
             'nonce_str' => bin2hex(openssl_random_pseudo_bytes(8)),
         ];
-        $params['sign'] = $this->signature($params);
+        $params['sign'] = $this->createSignature($params);
         $response = $this->api('https://api.mch.weixin.qq.com/pay/closeorder', 'POST', $params);
         if ($response->data['trade_state'] == 'SUCCESS') {
             return true;
@@ -197,7 +197,7 @@ class Wechat extends BaseClient
      * @param array $parameters
      * @return string
      */
-    protected function signature(array $parameters)
+    protected function createSignature(array $parameters)
     {
         foreach ($parameters as $key => $value) {
             if (null == $value || 'null' == $value || 'sign' == $key) {
