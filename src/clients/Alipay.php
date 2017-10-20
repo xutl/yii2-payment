@@ -7,10 +7,14 @@
 
 namespace xutl\payment\clients;
 
-use xutl\payment\BaseClient;
 use Yii;
 use yii\base\InvalidConfigException;
+use xutl\payment\BaseClient;
 
+/**
+ * Class Alipay
+ * @package xutl\payment\clients
+ */
 class Alipay extends BaseClient
 {
     /**

@@ -5,10 +5,11 @@
  * @license http://www.tintsoft.com/license/
  */
 
-namespace xutl\payment;
+namespace xutl\payment\clients;
 
 use Yii;
 use yii\base\InvalidConfigException;
+use xutl\payment\BaseClient;
 
 /**
  * Class Wechat
