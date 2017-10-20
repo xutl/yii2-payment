@@ -45,15 +45,11 @@ class Wechat extends BaseClient
     public $publicKey;
 
     /**
-     * @var string 网关地址
-     */
-    public $baseUrl = 'https://api.mch.weixin.qq.com';
-
-    /**
      * @var Client
      */
-    private $_httpClient = [
+    public $_httpClient = [
         'class' => 'yii\httpclient\Client',
+        'baseUrl' => 'https://api.mch.weixin.qq.com',
         'requestConfig' => [
             'format' => Client::FORMAT_XML
         ],
@@ -77,24 +73,24 @@ class Wechat extends BaseClient
         if (empty ($this->mchId)) {
             throw new InvalidConfigException ('The "mchId" property must be set.');
         }
-        if (empty ($this->privateKey)) {
-            throw new InvalidConfigException ('The "privateKey" property must be set.');
-        }
-        if (empty ($this->publicKey)) {
-            throw new InvalidConfigException ('The "publicKey" property must be set.');
-        }
-
-        $privateKey = "file://" . Yii::getAlias($this->privateKey);
-        $this->privateKey = openssl_pkey_get_private($privateKey);
-        if ($this->privateKey === false) {
-            throw new InvalidConfigException(openssl_error_string());
-        }
-
-        $publicKey = "file://" . Yii::getAlias($this->publicKey);
-        $this->publicKey = openssl_pkey_get_public($publicKey);
-        if ($this->publicKey === false) {
-            throw new InvalidConfigException(openssl_error_string());
-        }
+//        if (empty ($this->privateKey)) {
+//            throw new InvalidConfigException ('The "privateKey" property must be set.');
+//        }
+//        if (empty ($this->publicKey)) {
+//            throw new InvalidConfigException ('The "publicKey" property must be set.');
+//        }
+//
+//        $privateKey = "file://" . Yii::getAlias($this->privateKey);
+//        $this->privateKey = openssl_pkey_get_private($privateKey);
+//        if ($this->privateKey === false) {
+//            throw new InvalidConfigException(openssl_error_string());
+//        }
+//
+//        $publicKey = "file://" . Yii::getAlias($this->publicKey);
+//        $this->publicKey = openssl_pkey_get_public($publicKey);
+//        if ($this->publicKey === false) {
+//            throw new InvalidConfigException(openssl_error_string());
+//        }
     }
 
     /**
@@ -150,7 +146,7 @@ class Wechat extends BaseClient
             'nonce_str' => bin2hex(openssl_random_pseudo_bytes(8)),
         ];
         $params['sign'] = $this->createSignature($params);
-        $response = $this->api('https://api.mch.weixin.qq.com/pay/closeorder', 'POST', $params);
+        $response = $this->api('pay/closeorder', 'POST', $params);
         if ($response->data['trade_state'] == 'SUCCESS') {
             return true;
         }
@@ -181,18 +177,6 @@ class Wechat extends BaseClient
     }
 
     /**
-     * 获取Http Client
-     * @return Client
-     */
-    public function getHttpClient()
-    {
-        if (!is_object($this->_httpClient)) {
-            $this->_httpClient = $this->createHttpClient($this->_httpClient);
-        }
-        return $this->_httpClient;
-    }
-
-    /**
      * 签名
      * @param array $parameters
      * @return string
@@ -220,5 +204,17 @@ class Wechat extends BaseClient
     {
         libxml_disable_entity_loader(true);
         return json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
+    }
+
+    /**
+     * 获取Http Client
+     * @return Client
+     */
+    public function getHttpClient()
+    {
+        if (!is_object($this->_httpClient)) {
+            $this->_httpClient = $this->createHttpClient($this->_httpClient);
+        }
+        return $this->_httpClient;
     }
 }
