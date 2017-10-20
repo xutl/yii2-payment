@@ -10,6 +10,7 @@ namespace xutl\payment\clients;
 use Yii;
 use yii\base\InvalidConfigException;
 use xutl\payment\BaseClient;
+use yii\httpclient\Client;
 
 /**
  * Class Wechat
@@ -35,12 +36,17 @@ class Wechat extends BaseClient
     /**
      * @var string 私钥
      */
-    private $privateKey;
+    public $privateKey;
 
     /**
      * @var string 公钥
      */
-    private $publicKey;
+    public $publicKey;
+
+    /**
+     * @var string 网关地址
+     */
+    public $baseUrl = 'https://api.mch.weixin.qq.com';
 
     /**
      * 初始化
@@ -78,11 +84,66 @@ class Wechat extends BaseClient
     }
 
     /**
+     * 编译支付参数
+     * @param array $params
+     * @return mixed
+     */
+    public function buildPaymentParameter($params = [])
+    {
+        $defaultParams = [
+            'appid' => $this->appId,
+            'mch_id' => $this->mchId,
+            'nonce_str' => $this->generateRandomString(8),
+            'notify_url' => $this->getNoticeUrl(),
+            'device_info' => isset($this->deviceInfoMap[$params['trade_type']]) ? $this->deviceInfoMap[$params['trade_type']] : 'WEB',
+        ];
+        return array_merge($defaultParams, $params);
+    }
+
+    /**
      * 统一下单
      * @param array $params
      */
     public function unifiedOrder($params)
     {
+        $params = $this->buildPaymentParameter([
+            'body' => !empty($payment->model_id) ? $payment->model_id : '充值',
+            'out_trade_no' => $payment->id,
+            'total_fee' => round($payment->money * 100),
+            'fee_type' => $payment->currency,
+            'spbill_create_ip' => $payment->ip,
+            'trade_type' => $this->tradeTypeMap[$payment->trade_type],
+        ]);
+        if ($payment->trade_type == Payment::TYPE_JS_API) {//微信扫码付必须得字段
+            $params['openid'] = $payment->user->wechat->openid;
+        }
+        $params['sign'] = $this->createSign($params);
+        /** @var \yii\httpclient\Response $response */
+        $response = $this->createRequest()->setUrl('pay/unifiedorder')->setMethod('POST')->setData($params)->send();//统一下单
+        return $response;
+    }
 
+    /**
+     * 发送Http请求
+     * @param string $url 请求Url
+     * @param string $method 请求方法
+     * @param array|string|mixed $params
+     * @param array $headers 头
+     * @return string
+     */
+    public function sendRequest($url, $method = 'GET', $params, array $headers = [])
+    {
+        $request = $this->createRequest()
+            ->setMethod($method)
+            ->addHeaders($headers)
+            ->setUrl($url)
+            ->setFormat(Client::FORMAT_XML);
+        if (is_array($params)) {
+            $request->setData($params);
+        } else {
+            $request->setContent($params);
+        }
+        $response = $request->send();
+        return $response->content;
     }
 }
