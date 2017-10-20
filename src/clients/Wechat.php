@@ -7,6 +7,7 @@
 
 namespace xutl\payment\clients;
 
+use xutl\payment\Request;
 use Yii;
 use yii\base\InvalidConfigException;
 use xutl\payment\BaseClient;
@@ -47,6 +48,19 @@ class Wechat extends BaseClient
      * @var string 网关地址
      */
     public $baseUrl = 'https://api.mch.weixin.qq.com';
+
+    /**
+     * @var Client
+     */
+    private $_httpClient = [
+        'class' => 'yii\httpclient\Client',
+        'requestConfig' => [
+            'format' => Client::FORMAT_XML
+        ],
+        'responseConfig' => [
+            'format' => Client::FORMAT_XML
+        ],
+    ];
 
     /**
      * 初始化
@@ -102,25 +116,45 @@ class Wechat extends BaseClient
 
     /**
      * 统一下单
-     * @param array $params
+     * @param Request $request
      */
-    public function unifiedOrder($params)
+    public function unifiedOrder(Request $request)
     {
-        $params = $this->buildPaymentParameter([
-            'body' => !empty($payment->model_id) ? $payment->model_id : '充值',
-            'out_trade_no' => $payment->id,
-            'total_fee' => round($payment->money * 100),
-            'fee_type' => $payment->currency,
-            'spbill_create_ip' => $payment->ip,
-            'trade_type' => $this->tradeTypeMap[$payment->trade_type],
-        ]);
-        if ($payment->trade_type == Payment::TYPE_JS_API) {//微信扫码付必须得字段
-            $params['openid'] = $payment->user->wechat->openid;
+        if ($request->validate()) {
+            $params = $this->buildPaymentParameter([
+                'body' => !empty($request->payId) ? $request->payId : '充值',
+                'out_trade_no' => $request->outTradeNo,
+                'total_fee' => round($request->totalFee * 100),
+                'fee_type' => $request->currency,
+                'spbill_create_ip' => $request->userIp,
+                'trade_type' => $request->tradeType,
+            ]);
+            $params['sign'] = $this->createSign($params);
+            /** @var \yii\httpclient\Response $response */
+            $response = $this->createRequest()->setUrl('pay/unifiedorder')->setMethod('POST')->setData($params)->send();//统一下单
+            return $response;
         }
-        $params['sign'] = $this->createSign($params);
-        /** @var \yii\httpclient\Response $response */
-        $response = $this->createRequest()->setUrl('pay/unifiedorder')->setMethod('POST')->setData($params)->send();//统一下单
-        return $response;
+    }
+
+    /**
+     * 关闭订单
+     * @param string $paymentId
+     * @return bool
+     */
+    public function closeOrder($paymentId)
+    {
+        $params = [
+            'appid' => $this->appId,
+            'mch_id' => $this->mchId,
+            'out_trade_no' => $paymentId,
+            'nonce_str' => bin2hex(openssl_random_pseudo_bytes(8)),
+        ];
+        $params['sign'] = $this->signature($params);
+        $response = $this->api('https://api.mch.weixin.qq.com/pay/closeorder', 'POST', $params);
+        if ($response->data['trade_state'] == 'SUCCESS') {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -136,8 +170,7 @@ class Wechat extends BaseClient
         $request = $this->createRequest()
             ->setMethod($method)
             ->addHeaders($headers)
-            ->setUrl($url)
-            ->setFormat(Client::FORMAT_XML);
+            ->setUrl($url);
         if (is_array($params)) {
             $request->setData($params);
         } else {
@@ -145,5 +178,47 @@ class Wechat extends BaseClient
         }
         $response = $request->send();
         return $response->content;
+    }
+
+    /**
+     * 获取Http Client
+     * @return Client
+     */
+    public function getHttpClient()
+    {
+        if (!is_object($this->_httpClient)) {
+            $this->_httpClient = $this->createHttpClient($this->_httpClient);
+        }
+        return $this->_httpClient;
+    }
+
+    /**
+     * 签名
+     * @param array $parameters
+     * @return string
+     */
+    protected function signature(array $parameters)
+    {
+        foreach ($parameters as $key => $value) {
+            if (null == $value || 'null' == $value || 'sign' == $key) {
+                unset($parameters[$key]);
+            }
+        }
+        reset($parameters);
+        ksort($parameters);
+        $bizString = http_build_query($parameters);
+        $bizString .= '&key=' . $this->appKey;
+        return strtoupper(md5(urldecode(strtolower($bizString))));
+    }
+
+    /**
+     * 转换XML到数组
+     * @param \SimpleXMLElement|string $xml
+     * @return array
+     */
+    protected function convertXmlToArray($xml)
+    {
+        libxml_disable_entity_loader(true);
+        return json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
     }
 }

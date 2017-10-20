@@ -79,4 +79,23 @@ class Alipay extends BaseClient
     {
 
     }
+
+    /**
+     * 签名
+     * @param array $parameters
+     * @return string
+     */
+    protected function signature(array $parameters)
+    {
+        foreach ($parameters as $key => $value) {
+            if (null == $value || 'null' == $value || 'sign' == $key) {
+                unset($parameters[$key]);
+            }
+        }
+        reset($parameters);
+        ksort($parameters);
+        $bizString = http_build_query($parameters);
+        $bizString .= '&key=' . $this->appKey;
+        return strtoupper(md5(urldecode(strtolower($bizString))));
+    }
 }
