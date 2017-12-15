@@ -4,4 +4,12 @@
  * @copyright Copyright (c) 2012 TintSoft Technology Co. Ltd.
  * @license http://www.tintsoft.com/license/
  */
- 
+
+namespace xutl\payment\components;
+
+use yii\base\Component;
+
+class Alipay extends Component
+{
+
+}
