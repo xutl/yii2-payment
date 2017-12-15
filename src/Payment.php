@@ -60,7 +60,7 @@ class Payment extends ServiceLocator
     }
 
     /**
-     * 获取 AliPay 实例
+     * 获取 Wechat 实例
      * @return object|Wechat
      * @throws InvalidConfigException
      */
@@ -70,7 +70,7 @@ class Payment extends ServiceLocator
     }
 
     /**
-     * 获取 AliPay 实例
+     * 获取 Jdpay 实例
      * @return object|Jdpay
      * @throws InvalidConfigException
      */
@@ -79,7 +79,6 @@ class Payment extends ServiceLocator
         return $this->get('jdpay');
     }
 
-
     /**
      * Returns the configuration of payment components.
      * @see set()
@@ -87,9 +86,9 @@ class Payment extends ServiceLocator
     public function coreComponents()
     {
         return [
-            'alipay' => ['class' => 'xutl\payment\Alipay'],
-            'wechat' => ['class' => 'xutl\payment\Wechat'],
-            'jdpay' => ['class' => 'xutl\payment\Jdpay'],
+            'alipay' => ['class' => 'xutl\payment\components\Alipay'],
+            'wechat' => ['class' => 'xutl\payment\components\Wechat'],
+            'jdpay' => ['class' => 'xutl\payment\components\Jdpay'],
 
         ];
     }
