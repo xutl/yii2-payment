@@ -5,15 +5,17 @@
  * @license http://www.tintsoft.com/license/
  */
 
-namespace xutl\payment\gateways\wexin;
+namespace xutl\payment\components;
 
-use xutl\payment\Gateway;
+use Yii;
+use yii\base\InvalidConfigException;
+use xutl\payment\BaseClient;
 
 /**
- * Class Wexin
- * @package xutl\payment\gateways\wexin
+ * Class Wechat
+ * @package xutl\payment\components
  */
-class Wexin extends Gateway
+class Wechat extends BaseClient
 {
     /**
      * @var string 绑定支付的APPID
@@ -42,6 +44,7 @@ class Wexin extends Gateway
 
     /**
      * 初始化
+     * @throws InvalidConfigException
      */
     public function init()
     {
@@ -72,9 +75,6 @@ class Wexin extends Gateway
         $this->publicKey = openssl_pkey_get_public("file://" . $publicKey);
         if ($this->publicKey === false) {
             throw new InvalidConfigException(openssl_error_string());
-        }
-        if(YII_DEBUG){
-
         }
     }
 }
