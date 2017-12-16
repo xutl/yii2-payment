@@ -19,6 +19,12 @@ use yii\httpclient\RequestEvent;
  */
 class Wechat extends BaseClient
 {
+    const SIGNATURE_METHOD_MD5 = 'MD5';
+    const SIGNATURE_METHOD_SHA256 = 'HMAC-SHA256';
+
+    /**
+     * @var string 网关地址
+     */
     public $baseUrl = 'https://api.mch.weixin.qq.com';
 
     /**
@@ -45,6 +51,22 @@ class Wechat extends BaseClient
      * @var string 公钥
      */
     public $publicKey;
+
+    /**
+     * @var string 签名方法
+     */
+    public $signType = self::SIGNATURE_METHOD_MD5;
+
+    /**
+     * @var array 交易类型
+     */
+    public $tradeTypeMap = [
+        1 => 'NATIVE',//WEB 原生扫码支付
+        2 => 'JSAPI',//应用内JS API,如微信
+        3 => 'APP',//app支付
+        4 => 'MWEB',//H5支付
+        5 => 'MICROPAY',//刷卡支付
+    ];
 
     /**
      * 初始化
@@ -90,93 +112,95 @@ class Wechat extends BaseClient
      * @param array $params
      * @return mixed
      */
-    public function unifiedOrder($params)
+    public function preCreate($params)
     {
-        $params = $this->buildPaymentParameter([
+        $params = [
             'body' => !empty($params['payId']) ? $params['payId'] : '充值',
             'out_trade_no' => $params['outTradeNo'],
             'total_fee' => round($params['totalFee'] * 100),
             'fee_type' => $params['currency'],
-            'spbill_create_ip' => $params['userIp'],
             'trade_type' => $params['tradeType'],
-        ]);
-        $params['sign'] = $this->createSignature($params);
+            'notify_url' => 'http://www.openedu.tv',//$this->getNoticeUrl(),
+            'device_info' => 'WEB',
+            'spbill_create_ip' => Yii::$app->request->isConsoleRequest ? '127.0.0.1' : Yii::$app->request->userIP,
+        ];
         /** @var \yii\httpclient\Response $response */
-        $response = $this->createRequest()
-            ->setUrl('pay/unifiedorder')
-            ->setMethod('POST')
-            ->setData($params)
-            ->send();//统一下单
+        $response = $this->post('pay/unifiedorder', $params)->send();
         return $response->data;
 
     }
 
     /**
      * 关闭订单
-     * @param string $paymentId
+     * @param string $outTradeNo
      * @return bool
-     * @throws \yii\base\Exception
      */
-    public function closeOrder($paymentId)
+    public function closeOrder($outTradeNo)
     {
-        $params = [
-            'appid' => $this->appId,
-            'mch_id' => $this->mchId,
-            'out_trade_no' => $paymentId,
-            'nonce_str' => $this->generateRandomString(),
-        ];
-        $params['sign'] = $this->createSignature($params);
-        $response = $this->post('pay/closeorder', $params);
-        if ($response->data['trade_state'] == 'SUCCESS') {
-            return true;
-        }
-        return false;
+        $response = $this->post('pay/closeorder', [
+            'out_trade_no' => $outTradeNo,
+        ])->send();
+        return $response->data;
     }
 
     /**
-     * 签名
-     * @param array $parameters
-     * @return string
-     */
-    protected function createSignature(array $parameters)
-    {
-        foreach ($parameters as $key => $value) {
-            if (null == $value || 'null' == $value || 'sign' == $key) {
-                unset($parameters[$key]);
-            }
-        }
-        reset($parameters);
-        ksort($parameters);
-        $bizString = http_build_query($parameters);
-        $bizString .= '&sign_type=MD5&key=' . $this->appKey;
-        return strtoupper(md5(urldecode(strtolower($bizString))));
-    }
-
-    /**
-     * 编译支付参数
-     * @param array $params
+     * 查询订单号
+     * @param string $outTradeNo
      * @return mixed
      */
-    public function buildPaymentParameter($params = [])
+    public function query($outTradeNo)
     {
-        $defaultParams = [
-            'appid' => $this->appId,
-            'mch_id' => $this->mchId,
-            'nonce_str' => $this->generateRandomString(8),
-            'notify_url' => 'http://www.openedu.tv',//$this->getNoticeUrl(),
-            'device_info' => 'WEB'
-            //'device_info' => isset($this->deviceInfoMap[$params['trade_type']]) ? $this->deviceInfoMap[$params['trade_type']] : 'WEB',
-        ];
-        return array_merge($defaultParams, $params);
+        $response = $this->post('pay/orderquery', [
+            'out_trade_no' => $outTradeNo,
+        ])->send();
+        return $response->data;
+    }
+
+    public function refund()
+    {
+
     }
 
     /**
      * 请求事件
      * @param RequestEvent $event
      * @return void
+     * @throws \yii\base\Exception
      */
     public function RequestEvent(RequestEvent $event)
     {
+        $params = $event->request->getData();
+        $params['appid'] = $this->appId;
+        $params['mch_id'] = $this->mchId;
+        $params['nonce_str'] = $this->generateRandomString(32);
+        $params['sign_type'] = $this->signType;
+        $params['sign'] = $this->generateSignature($params);
+        $event->request->setData($params);
+    }
 
+    /**
+     * 生成签名
+     * @param array $params
+     * @return string
+     * @throws InvalidConfigException
+     */
+    protected function generateSignature(array $params)
+    {
+        $bizParameters = [];
+        foreach ($params as $k => $v) {
+            if ($k != "sign" && $v != "" && !is_array($v)) {
+                $bizParameters[$k] = $v;
+            }
+        }
+        ksort($bizParameters);
+        $bizString = urldecode(http_build_query($bizParameters) . '&key=' . $this->appKey);
+        if ($this->signType == self::SIGNATURE_METHOD_MD5) {
+            $sign = md5($bizString);
+        } elseif ($this->signType == self::SIGNATURE_METHOD_SHA256) {
+            $sign = hash_hmac('sha256', $bizString, $this->appKey);
+        } else {
+            throw new InvalidConfigException ('This encryption is not supported');
+        }
+        return strtoupper($sign);
     }
 }

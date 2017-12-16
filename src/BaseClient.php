@@ -114,11 +114,12 @@ abstract class BaseClient extends Client implements ClientInterface
     /**
      * 生成一个指定长度的随机字符串
      * @param int $length
+     * @return string
      * @throws \yii\base\Exception
      */
     protected function generateRandomString($length = 32)
     {
-        Yii::$app->security->generateRandomString($length);
+        return Yii::$app->security->generateRandomString($length);
     }
 
 }

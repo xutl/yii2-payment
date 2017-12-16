@@ -130,7 +130,10 @@ class AliPay extends BaseClient
 
     }
 
-    public function preCreate()
+    /**
+     * @param $params
+     */
+    public function preCreate($params)
     {
 
     }
