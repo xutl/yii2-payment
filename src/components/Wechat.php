@@ -115,6 +115,7 @@ class Wechat extends BaseClient
      * 关闭订单
      * @param string $paymentId
      * @return bool
+     * @throws \yii\base\Exception
      */
     public function closeOrder($paymentId)
     {
@@ -122,10 +123,10 @@ class Wechat extends BaseClient
             'appid' => $this->appId,
             'mch_id' => $this->mchId,
             'out_trade_no' => $paymentId,
-            'nonce_str' => bin2hex(openssl_random_pseudo_bytes(8)),
+            'nonce_str' => $this->generateRandomString(),
         ];
         $params['sign'] = $this->createSignature($params);
-        $response = $this->api('pay/closeorder', 'POST', $params);
+        $response = $this->post('pay/closeorder', $params);
         if ($response->data['trade_state'] == 'SUCCESS') {
             return true;
         }

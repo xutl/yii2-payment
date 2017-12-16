@@ -9,5 +9,5 @@ namespace xutl\payment;
 
 interface ClientInterface
 {
-
+    public function preCreate();
 }
