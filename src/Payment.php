@@ -7,7 +7,12 @@
 
 namespace xutl\payment;
 
+use xutl\payment\components\UnionPay;
 use yii\di\ServiceLocator;
+use yii\base\InvalidConfigException;
+use xutl\payment\components\AliPay;
+use xutl\payment\components\JdPay;
+use xutl\payment\components\Wechat;
 
 /**
  * Class Payment
@@ -23,14 +28,6 @@ class Payment extends ServiceLocator
     {
         $this->preInit($config);
         parent::__construct($config);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function init()
-    {
-        parent::init();
     }
 
     /**
@@ -51,7 +48,7 @@ class Payment extends ServiceLocator
 
     /**
      * 获取 AliPay 实例
-     * @return object|Alipay
+     * @return object|AliPay
      * @throws InvalidConfigException
      */
     public function getAlipay()
@@ -71,12 +68,22 @@ class Payment extends ServiceLocator
 
     /**
      * 获取 Jdpay 实例
-     * @return object|Jdpay
+     * @return object|JdPay
      * @throws InvalidConfigException
      */
     public function getJdpay()
     {
         return $this->get('jdpay');
+    }
+
+    /**
+     * 获取 unionpay 实例
+     * @return object|UnionPay
+     * @throws InvalidConfigException
+     */
+    public function getUnionpay()
+    {
+        return $this->get('unionpay');
     }
 
     /**
@@ -86,10 +93,10 @@ class Payment extends ServiceLocator
     public function coreComponents()
     {
         return [
-            'alipay' => ['class' => 'xutl\payment\components\Alipay'],
+            'alipay' => ['class' => 'xutl\payment\components\AliPay'],
             'wechat' => ['class' => 'xutl\payment\components\Wechat'],
-            'jdpay' => ['class' => 'xutl\payment\components\Jdpay'],
-
+            'jdpay' => ['class' => 'xutl\payment\components\JdPay'],
+            'unionpay'=>['class' => 'xutl\payment\components\UnionPay'],
         ];
     }
 }
