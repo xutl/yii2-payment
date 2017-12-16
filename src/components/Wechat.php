@@ -55,7 +55,7 @@ class Wechat extends BaseClient
     /**
      * @var string 签名方法
      */
-    public $signType = self::SIGNATURE_METHOD_MD5;
+    public $signType = self::SIGNATURE_METHOD_SHA256;
 
     /**
      * @var array 交易类型
