@@ -99,7 +99,7 @@ abstract class BaseClient extends Client implements ClientInterface
      */
     protected function defaultName()
     {
-        return Inflector::camel2id(StringHelper::basename(get_class($this)));
+        return Inflector::camel2id(StringHelper::basename(get_class($this)),'');
     }
 
     /**
