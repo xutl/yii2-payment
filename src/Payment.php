@@ -95,8 +95,8 @@ class Payment extends ServiceLocator
         return [
             'alipay' => ['class' => 'xutl\payment\components\AliPay'],
             'wechat' => ['class' => 'xutl\payment\components\Wechat'],
-            'jdpay' => ['class' => 'xutl\payment\components\JdPay'],
-            'unionpay'=>['class' => 'xutl\payment\components\UnionPay'],
+            //'jdpay' => ['class' => 'xutl\payment\components\JdPay'],
+            //'unionpay'=>['class' => 'xutl\payment\components\UnionPay'],
         ];
     }
 }

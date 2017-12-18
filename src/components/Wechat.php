@@ -7,6 +7,7 @@
 
 namespace xutl\payment\components;
 
+use xutl\payment\OrderInterface;
 use Yii;
 use yii\base\InvalidConfigException;
 use xutl\payment\BaseClient;
@@ -107,27 +108,31 @@ class Wechat extends BaseClient
         $this->on(Client::EVENT_BEFORE_SEND, [$this, 'RequestEvent']);
     }
 
+    public function getTitle()
+    {
+        return 'Wechat';
+    }
+
     /**
      * 统一下单
      * @param array $params
      * @return mixed
      */
-    public function preCreate($params)
+    public function preCreate(array $params)
     {
-        $params = [
-            'body' => !empty($params['payId']) ? $params['payId'] : '充值',
-            'out_trade_no' => $params['outTradeNo'],
-            'total_fee' => round($params['totalFee'] * 100),
+        $data = [
+            'body' => $params['subject'],
+            'out_trade_no' => $params['id'],
+            'total_fee' => round($params['total_amount'] * 100),
             'fee_type' => $params['currency'],
-            'trade_type' => $params['tradeType'],
+            'trade_type' => $params['type'],
             'notify_url' => 'http://www.openedu.tv',//$this->getNoticeUrl(),
             'device_info' => 'WEB',
             'spbill_create_ip' => Yii::$app->request->isConsoleRequest ? '127.0.0.1' : Yii::$app->request->userIP,
         ];
         /** @var \yii\httpclient\Response $response */
-        $response = $this->post('pay/unifiedorder', $params)->send();
+        $response = $this->post('pay/unifiedorder', $data)->send();
         return $response->data;
-
     }
 
     /**
@@ -146,7 +151,7 @@ class Wechat extends BaseClient
     /**
      * 查询订单号
      * @param string $outTradeNo
-     * @return mixed
+     * @return array
      */
     public function query($outTradeNo)
     {
@@ -156,6 +161,9 @@ class Wechat extends BaseClient
         return $response->data;
     }
 
+    /**
+     * 退款
+     */
     public function refund()
     {
 
