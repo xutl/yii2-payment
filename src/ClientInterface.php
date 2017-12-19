@@ -7,15 +7,20 @@
 
 namespace xutl\payment;
 
+/**
+ * Interface ClientInterface
+ * @package xutl\payment
+ */
 interface ClientInterface
 {
 
     /**
      * 统一下单
      * @param array $params
+     * @param array $paymentParams
      * @return mixed
      */
-    public function preCreate(array $params);
+    public function preCreate(array $params, array $paymentParams);
 
     /**
      * 查询订单

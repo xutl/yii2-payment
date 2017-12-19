@@ -7,9 +7,8 @@
 
 namespace xutl\payment\components;
 
-use xutl\payment\OrderInterface;
-use xutl\payment\PaymentException;
 use Yii;
+use yii\web\Request;
 use yii\base\InvalidConfigException;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
@@ -17,6 +16,7 @@ use yii\httpclient\Client;
 use yii\httpclient\Exception;
 use yii\httpclient\RequestEvent;
 use xutl\payment\BaseClient;
+use xutl\payment\PaymentException;
 
 /**
  * Class Alipay
@@ -97,10 +97,10 @@ class AliPay extends BaseClient
     /**
      * 统一下单
      * @param array $params
-     * @return array
+     * @param array $paymentParams
      * @throws PaymentException
      */
-    public function preCreate(array $params)
+    public function preCreate(array $params, array $paymentParams)
     {
         $data = [
             'method' => 'alipay.trade.precreate',
@@ -115,7 +115,7 @@ class AliPay extends BaseClient
                 'notify_url' => 'http://dev.yuncms.net',
             ],
         ];
-        return $this->sendRequest($data);
+        $paymentParams = $this->sendRequest($data);
     }
 
     /**
@@ -279,5 +279,33 @@ class AliPay extends BaseClient
         $stringToBeSigned = substr($stringToBeSigned, 0, -1);
         unset($k, $v);
         return $stringToBeSigned;
+    }
+
+    /**
+     * 支付响应
+     * @param Request $request
+     * @param $paymentId
+     * @param $money
+     * @param $message
+     * @param $payId
+     * @return mixed
+     */
+    public function callback(Request $request, &$paymentId, &$money, &$message, &$payId)
+    {
+        // TODO: Implement callback() method.
+    }
+
+    /**
+     * 服务端通知
+     * @param Request $request
+     * @param $paymentId
+     * @param $money
+     * @param $message
+     * @param $payId
+     * @return mixed
+     */
+    public function notice(Request $request, &$paymentId, &$money, &$message, &$payId)
+    {
+        // TODO: Implement notice() method.
     }
 }

@@ -7,12 +7,12 @@
 
 namespace xutl\payment\components;
 
-use xutl\payment\OrderInterface;
 use Yii;
 use yii\base\InvalidConfigException;
 use xutl\payment\BaseClient;
 use yii\httpclient\Client;
 use yii\httpclient\RequestEvent;
+use yii\web\Request;
 
 /**
  * Class Wechat
@@ -118,7 +118,7 @@ class Wechat extends BaseClient
      * @param array $params
      * @return mixed
      */
-    public function preCreate(array $params)
+    public function preCreate(array $params, array $paymentParams)
     {
         $data = [
             'body' => $params['subject'],
@@ -170,6 +170,20 @@ class Wechat extends BaseClient
     }
 
     /**
+     * 支付响应
+     * @param Request $request
+     * @param $paymentId
+     * @param $money
+     * @param $message
+     * @param $payId
+     * @return mixed
+     */
+    public function callback(Request $request, &$paymentId, &$money, &$message, &$payId)
+    {
+        return;
+    }
+
+    /**
      * 请求事件
      * @param RequestEvent $event
      * @return void
@@ -210,5 +224,45 @@ class Wechat extends BaseClient
             throw new InvalidConfigException ('This encryption is not supported');
         }
         return strtoupper($sign);
+    }
+
+    /**
+     * 服务端通知
+     * @param Request $request
+     * @param string $paymentId
+     * @param float $money
+     * @param string $message
+     * @param string $payId
+     * @return mixed
+     */
+    public function notice(Request $request, &$paymentId, &$money, &$message, &$payId)
+    {
+        $xml = $request->getRawBody();
+        //如果返回成功则验证签名
+        try {
+            $params = $this->convertXmlToArray($xml);
+            $paymentId = $params['out_trade_no'];
+            $money = $params['total_fee'];
+            $message = $params['return_code'];
+            $payId = $params['transaction_id'];
+            if ($params['return_code'] == 'SUCCESS' && $params['sign'] == $this->generateSignature($params)) {
+                echo '<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>';
+                return true;
+            }
+        } catch (\Exception $e) {
+        }
+        echo '<xml><return_code><![CDATA[FAIL]]></return_code><return_msg><![CDATA[FAIL]]></return_msg></xml>';
+        return false;
+    }
+
+    /**
+     * 转换XML到数组
+     * @param \SimpleXMLElement|string $xml
+     * @return array
+     */
+    protected function convertXmlToArray($xml)
+    {
+        libxml_disable_entity_loader(true);
+        return json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
     }
 }
